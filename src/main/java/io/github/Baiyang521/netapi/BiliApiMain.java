@@ -12,13 +12,20 @@ import io.github.Baiyang521.netapi.bilibili.VideoInfo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class BiliApiMain implements IMusicApi {
     private final BilibiliApi api = new BilibiliApi();
+    private File dataFolder;
 
     public BiliApiMain() {
         AllMusic.log.data("<light_purple>[Bilibili]<yellow>Bilibili NetAPI loaded");
+    }
+
+    @Override
+    public void reload(File path) {
+        this.dataFolder = path;
     }
 
     @Override
@@ -38,8 +45,8 @@ public final class BiliApiMain implements IMusicApi {
     }
 
     @Override
-    public SearchPageObj search(String[] name, boolean isDefault) {
-        String keyword = buildKeyword(name, isDefault);
+    public SearchPageObj search(String[] args) {
+        String keyword = buildKeyword(args);
         if (keyword.isEmpty()) {
             return new SearchPageObj(new ArrayList<>(), 0, getId());
         }
@@ -74,8 +81,9 @@ public final class BiliApiMain implements IMusicApi {
             return null;
         }
         String key = info.bvid + "_" + info.cid;
-        File dataFolder = AllMusic.side == null ? null : AllMusic.side.getFolder();
-        String url = BilibiliStreamServer.createUrl(key, directUrl, dataFolder);
+        File folder = dataFolder != null ? dataFolder
+                : (AllMusic.side == null ? null : AllMusic.side.getFolder());
+        String url = BilibiliStreamServer.createUrl(key, directUrl, folder);
         if (url == null) {
             AllMusic.log.data("<light_purple>[Bilibili]<red>Unable to prepare playable stream: " + id);
         }
@@ -97,14 +105,23 @@ public final class BiliApiMain implements IMusicApi {
         return api.checkId(id);
     }
 
-    private static String buildKeyword(String[] args, boolean isDefault) {
+    @Override
+    public void command(Object sender, String name, String[] args) {
+        AllMusic.log.data("<light_purple>[Bilibili]<yellow>Bilibili NetAPI has no custom commands");
+    }
+
+    @Override
+    public List<String> tab(Object sender, String name, String[] args) {
+        return Collections.emptyList();
+    }
+
+    private static String buildKeyword(String[] args) {
         if (args == null || args.length == 0) {
             return "";
         }
-        int start = isDefault ? 0 : 1;
         StringBuilder builder = new StringBuilder();
-        for (int index = start; index < args.length; index++) {
-            if (index > start) {
+        for (int index = 0; index < args.length; index++) {
+            if (index > 0) {
                 builder.append(' ');
             }
             builder.append(args[index]);
